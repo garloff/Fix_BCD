@@ -22,10 +22,19 @@ the existing partitions and adjusts the BCD according to your choices.
 You would typically run this on Linux with `/boot/efi/Boot/BCD` for
 the Windows Boot Manager and with `/boot/efi/EFI/Microsoft/Boot/BCD`
 for the Windows Boot and `/boot/efi/EFI/Microsoft/Recovery/BCD`
-for Windows Recovery Boot.
+for Windows Recovery Boot. (The path assumes that your EFI boot partition
+is mounted at `/boot/efi` which is typically the case on Linux machines.)
 
 Note that it requires the `reged` binary (from the `chntpw` package)
 to read and change the Windows registry entries.
+To access registries, there is a little ORM-like translation tool in
+`class registry_dict.RegDict` which behaves like a dictionary with
+additional `read()` and `write()` methods that do the registry translation.
+Feel free to reuse it.
+
+Notes: The `registry_dict.py` helper is under Apache-2.0 license, while
+the fix script `fix_boot_bcd.py` uses `CC-BY-SA-4.0`. So do not create
+proprietary tools nor remove credits to me from the latter.
 
 This tool was inspired by [lupoDharkael](https://gist.github.com/lupoDharkael)
 with his
