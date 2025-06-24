@@ -200,7 +200,7 @@ def correct_uuid(uuid, offs, dct):
     # print(dct['Element'])
 
 
-def list_and_correct_entries(regd):
+def list_and_correct_entries(regd, nochange):
     "List boot menu entries and correct wrong disk UUIDs"
     file_key = "12000002"
     fil2_key = "22000002"
@@ -213,12 +213,12 @@ def list_and_correct_entries(regd):
     objs = regd["Objects"]
     for obk, ob in objs.items():
         elms = ob["Elements"]
-        if desc_key not in elms:
+        if desc_key not in elms or 'Element' not in elms[desc_key]:
             continue
         desc = elms[desc_key]["Element"]
-        if file_key in elms:
+        if file_key in elms and 'Element' in elms[file_key]:
             desc += " (" + elms[file_key]['Element'].replace("\\\\", "\\") + ")"
-        if fil2_key in elms:
+        if fil2_key in elms and 'Element' in elms[fil2_key]:
             desc += " (" + elms[fil2_key]['Element'].replace("\\\\", "\\") + ")"
         print(f"Entry {obk}: {desc}")
         resp = None
@@ -232,9 +232,9 @@ def list_and_correct_entries(regd):
                     continue
                 if ids[0] not in PartUUIDs:
                     print("  Partition UUID unknown!")
-                    if not resp:
+                    if not resp and not nochange:
                         resp = select_uuid()
-                    if not resp:
+                    if not resp or nochange:
                         unfixed += 1
                         continue
                     correct_uuid(resp, offs[0], elms[key])
@@ -251,8 +251,11 @@ def list_and_correct_entries(regd):
                         continue
                     if ids[1] != PartDisks[ids[0]]:
                         print(f"  Partition {PartUUIDs[ids[0]]} should be on {PartDisks[ids[0]]} not {ids[1]}, correct")
-                        correct_uuid(PartDisks[ids[0]], offs[1], elms[key])
-                        fixes += 1
+                        if not nochange:
+                            correct_uuid(PartDisks[ids[0]], offs[1], elms[key])
+                            fixes += 1
+                        else:
+                            unfixed += 1
                     else:
                         print(f"  Partition {PartUUIDs[ids[0]]} on {PartDskNm[ids[0]]} OK")
     return fixes, unfixed
@@ -260,22 +263,27 @@ def list_and_correct_entries(regd):
 
 def usage():
     "help"
-    print("Usage: fix_boot_bcd.py /PATH/TO/BCD")
-    print(" You typically need to run this as root")
+    print("Usage: fix_boot_bcd.py [-n] /PATH/TO/BCD")
+    print(" You typically need to run this as root.")
+    print(" -n disallows changes")
     sys.exit(1)
 
 
 def main(argv):
     "Main entry point"
+    nochange = False
     if len(argv) < 2:
         usage()
+    if argv[1] == "-n":
+        nochange = True
+        argv = argv[1:]
     collect_partuuids()
     # print(f"Partitions: {PartUUIDs}")
     # print(f"Disks: {DiskUUIDs}")
     # print(f"PartDisks: {PartDisks}")
     bcd = registry_dict.RegDict(argv[1])
     # print(bcd)
-    fixes, unfixed = list_and_correct_entries(bcd)
+    fixes, unfixed = list_and_correct_entries(bcd, nochange)
     if fixes:
         bcd.write(True)
     return unfixed
