@@ -39,7 +39,8 @@ Notes: The `registry_dict.py` helper is under Apache-2.0 license, while
 the fix script `fix_boot_bcd.py` uses the `CC-BY-SA-4.0` license. So do
 not create proprietary tools nor remove credits to me from the latter.
 
-This tool was inspired by [lupoDharkael](https://gist.github.com/lupoDharkael)
-with his
-[instructions](https://gist.github.com/lupoDharkael/f0054016e2dbdddc0293871af3eb6189).
-Huge thanks for figuring this all out!
+This tool was inspired by [Moondarker](https://gist.github.com/Moondarker) with his
+[instructions](https://gist.github.com/Moondarker/2c5b7ed1c6372119ebf03f0b12d11e92)
+which I [found](https://gist.github.com/lupoDharkael/f0054016e2dbdddc0293871af3eb6189)
+from [lupoDharkael](https://gist.github.com/lupoDharkael) who made me aware of
+the original source.
