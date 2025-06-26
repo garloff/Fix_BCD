@@ -216,7 +216,7 @@ def correct_uuid(uuid, offs, dct):
     # print(dct['Element'])
 
 
-def list_and_correct_entries(regd, nochange, ovwr_list):
+def list_and_correct_entries(regd, ovwr_list):
     "List boot menu entries and correct wrong disk UUIDs"
     file_key = "12000002"
     fil2_key = "22000002"
@@ -251,9 +251,9 @@ def list_and_correct_entries(regd, nochange, ovwr_list):
                     obk2 = obk[1:-1]
                 if ids[0] not in PartUUIDs or obk in ovwr_list or obk2 in ovwr_list:
                     print("  Partition UUID needs fixing!")
-                    if not resp:  # and not nochange:
+                    if not resp:
                         resp = select_uuid()
-                    if not resp:  # or nochange:
+                    if not resp:
                         unfixed += 1
                         continue
                     correct_uuid(resp, offs[0], elms[key])
@@ -270,11 +270,8 @@ def list_and_correct_entries(regd, nochange, ovwr_list):
                         continue
                     if ids[1] != PartDisks[ids[0]]:
                         print(f"  Partition {PartUUIDs[ids[0]]} should be on {PartDisks[ids[0]]} not {ids[1]}, correct")
-                        # if not nochange:
                         correct_uuid(PartDisks[ids[0]], offs[1], elms[key])
                         fixes += 1
-                        # else:
-                        #     unfixed += 1
                     else:
                         print(f"  Partition {PartUUIDs[ids[0]]} on {PartDskNm[ids[0]]} OK")
     return fixes, unfixed
@@ -317,11 +314,13 @@ def main(argv):
     for arg in args:
         bcd = registry_dict.RegDict(arg)
         # print(bcd)
-        fixes, unfixed = list_and_correct_entries(bcd, nochange, ovwr_list)
+        fixes, unfixed = list_and_correct_entries(bcd, ovwr_list)
         if fixes:
             if not nochange:
                 print(f"Commiting {fixes} changes to {arg}")
                 bcd.write(True)
+                # Note: We ignore the return code here, as reged at times
+                # returns non-zero despite succeeding.
             else:
                 unfixed += fixes
                 print(f"NOT writing {fixes} changes to {arg}")
