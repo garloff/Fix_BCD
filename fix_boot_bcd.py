@@ -189,7 +189,7 @@ def select_uuid():
         if ans in PartUUIDs:
             return ans
         if ans.find(",") != -1:
-            pid, did = ans.split[","]
+            pid, did = ans.split(",")
             if is_uuidfmt(pid) and is_uuidfmt(did):
                 PartDisks[pid] = did
                 return pid
@@ -246,11 +246,14 @@ def list_and_correct_entries(regd, nochange, ovwr_list):
                     print("  ERROR")
                     unfixed += 1
                     continue
-                if ids[0] not in PartUUIDs or ids[0] in ovwr_list:
-                    print("  Partition UUID unknown!")
-                    if not resp and not nochange:
+                obk2 = obk
+                if obk2[0] == '{' and obk2[-1] == '}':
+                    obk2 = obk[1:-1]
+                if ids[0] not in PartUUIDs or obk in ovwr_list or obk2 in ovwr_list:
+                    print("  Partition UUID needs fixing!")
+                    if not resp:  # and not nochange:
                         resp = select_uuid()
-                    if not resp or nochange:
+                    if not resp:  # or nochange:
                         unfixed += 1
                         continue
                     correct_uuid(resp, offs[0], elms[key])
@@ -267,17 +270,17 @@ def list_and_correct_entries(regd, nochange, ovwr_list):
                         continue
                     if ids[1] != PartDisks[ids[0]]:
                         print(f"  Partition {PartUUIDs[ids[0]]} should be on {PartDisks[ids[0]]} not {ids[1]}, correct")
-                        if not nochange:
-                            correct_uuid(PartDisks[ids[0]], offs[1], elms[key])
-                            fixes += 1
-                        else:
-                            unfixed += 1
+                        # if not nochange:
+                        correct_uuid(PartDisks[ids[0]], offs[1], elms[key])
+                        fixes += 1
+                        # else:
+                        #     unfixed += 1
                     else:
                         print(f"  Partition {PartUUIDs[ids[0]]} on {PartDskNm[ids[0]]} OK")
     return fixes, unfixed
 
 
-def usage():
+def usage(rc=1):
     "help"
     print("Usage: fix_boot_bcd.py [-n] [-o entry[,entry]] /PATH/TO/BCD")
     print(" You typically need to run this as root.")
@@ -286,7 +289,7 @@ def usage():
     print("  automatically fixed. User will be asked about non-existing partitions.")
     print(" -n prevents changes to be written to the BCD registry.")
     print(" -o entry[,entry[,...]] allows to interactively adjust valied boot entries")
-    sys.exit(1)
+    sys.exit(rc)
 
 
 def main(argv):
@@ -300,11 +303,11 @@ def main(argv):
         usage()
     for (opt, arg) in opts:
         if opt in ("-h", "--help"):
-            usage()
+            usage(0)
         elif opt == "-n":
             nochange = True
         elif opt == "-o":
-            ovwr_list = arg.split(",")
+            ovwr_list.extend(arg.split(","))
     if not args:
         usage()
     collect_partuuids()
@@ -316,7 +319,12 @@ def main(argv):
         # print(bcd)
         fixes, unfixed = list_and_correct_entries(bcd, nochange, ovwr_list)
         if fixes:
-            bcd.write(True)
+            if not nochange:
+                print(f"Commiting {fixes} changes to {arg}")
+                bcd.write(True)
+            else:
+                unfixed += fixes
+                print(f"NOT writing {fixes} changes to {arg}")
     return unfixed
 
 
