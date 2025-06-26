@@ -16,16 +16,24 @@ This makes moving really harder than it needs to be:
 
 `fix_boot_bcd.py BCDFILE` analyzes the BCD file and searches for the
 partition and disk UUIDs and checks whether these are consistent and
-existing on your system. Otherwise it offers you a selection of
-the existing partitions and adjusts the BCD according to your choices.
+existing on your system. Wrong Disk UUIDs for existing parititions
+UUIDs are just corrected. For non-existing parttion UUIDS, you get offered
+a selection of the existing partitions and the BCD is then adjusted
+according to your choices. (A backup file is created if any changes are made.)
+
 With option `-n`, it does not do any changes but just lists the boot
-entries and reports problems.
+entries and reports problems. With option `-o`, you can force the
+script to consider partition UUIDs as invalid and ask for replacement.
 
 You would typically run this as root on Linux with `/boot/efi/Boot/BCD`
 for the Windows Boot Manager and with `/boot/efi/EFI/Microsoft/Boot/BCD`
 for Windows Boot and `/boot/efi/EFI/Microsoft/Recovery/BCD` for
 Windows Recovery Boot. (The path assumes that your EFI boot partition
-is mounted at `/boot/efi` which is typically the case on Linux machines.)
+is mounted at `/boot/efi` which is typically the case on Linux machines.)a
+
+For image files, you can use `kpartx` to setup device-mapper and loopback
+mappings and the script will then happily process BCD entries referring
+to disk and partition UUIDs from the image.
 
 Note that it requires the `reged` binary (from the `chntpw` package)
 to read and change the Windows registry entries.

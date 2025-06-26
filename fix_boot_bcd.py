@@ -10,6 +10,8 @@
 
 import os
 import sys
+import re
+import getopt
 import shutil
 import registry_dict
 
@@ -166,17 +168,31 @@ def partkey(st):
     return st
 
 
+def is_uuidfmt(st):
+    "Returns true if string is in UUID format"
+    uuidfmt = re.compile(r'^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$')
+    return uuidfmt.match(st) is not None
+
+
 def select_uuid():
     "Display list of partitions and ask user to select one"
+    print("  Disks:")
+    for disk in sorted(DiskUUIDs):
+        print(f"   {disk:8} : {DiskUUIDs[disk]}")
+    print("  Partitions:")
+    for part in sorted(PartUUIDs, key = lambda x: partkey(PartUUIDs[x])):
+        print(f"   {PartUUIDs[part]:10} : {PartDescr[part]:30} : {part}")
     while True:
-        print("  Select Partition:")
-        for part in sorted(PartUUIDs, key = lambda x: partkey(PartUUIDs[x])):
-            print(f"   {PartUUIDs[part]:10} : {PartDescr[part]:30} : {part}")
-        ans = input("  Partition: ")
+        ans = input("  Partition (DevName or PartUUID or PartUUID,DiskUUID): ")
         if not ans:
             return None
         if ans in PartUUIDs:
             return ans
+        if ans.find(",") != -1:
+            pid, did = ans.split[","]
+            if is_uuidfmt(pid) and is_uuidfmt(did):
+                PartDisks[pid] = did
+                return pid
         for partid, partnm in PartUUIDs.items():
             if ans == partnm:
                 return partid
@@ -200,7 +216,7 @@ def correct_uuid(uuid, offs, dct):
     # print(dct['Element'])
 
 
-def list_and_correct_entries(regd, nochange):
+def list_and_correct_entries(regd, nochange, ovwr_list):
     "List boot menu entries and correct wrong disk UUIDs"
     file_key = "12000002"
     fil2_key = "22000002"
@@ -230,7 +246,7 @@ def list_and_correct_entries(regd, nochange):
                     print("  ERROR")
                     unfixed += 1
                     continue
-                if ids[0] not in PartUUIDs:
+                if ids[0] not in PartUUIDs or ids[0] in ovwr_list:
                     print("  Partition UUID unknown!")
                     if not resp and not nochange:
                         resp = select_uuid()
@@ -263,29 +279,44 @@ def list_and_correct_entries(regd, nochange):
 
 def usage():
     "help"
-    print("Usage: fix_boot_bcd.py [-n] /PATH/TO/BCD")
+    print("Usage: fix_boot_bcd.py [-n] [-o entry[,entry]] /PATH/TO/BCD")
     print(" You typically need to run this as root.")
-    print(" -n disallows changes")
+    print(" The BCD file will be changed (but a backup file is created) if any")
+    print("  entries need changes. Disk UUIDs for existing partition UUIDs will by")
+    print("  automatically fixed. User will be asked about non-existing partitions.")
+    print(" -n prevents changes to be written to the BCD registry.")
+    print(" -o entry[,entry[,...]] allows to interactively adjust valied boot entries")
     sys.exit(1)
 
 
 def main(argv):
     "Main entry point"
     nochange = False
-    if len(argv) < 2:
+    ovwr_list = []
+    try:
+        opts, args = getopt.gnu_getopt(argv[1:], "hno:", ('help',))
+    except getopt.GetoptError as exc:
+        print(exc, file=sys.stderr)
         usage()
-    if argv[1] == "-n":
-        nochange = True
-        argv = argv[1:]
+    for (opt, arg) in opts:
+        if opt in ("-h", "--help"):
+            usage()
+        elif opt == "-n":
+            nochange = True
+        elif opt == "-o":
+            ovwr_list = arg.split(",")
+    if not args:
+        usage()
     collect_partuuids()
     # print(f"Partitions: {PartUUIDs}")
     # print(f"Disks: {DiskUUIDs}")
     # print(f"PartDisks: {PartDisks}")
-    bcd = registry_dict.RegDict(argv[1])
-    # print(bcd)
-    fixes, unfixed = list_and_correct_entries(bcd, nochange)
-    if fixes:
-        bcd.write(True)
+    for arg in args:
+        bcd = registry_dict.RegDict(arg)
+        # print(bcd)
+        fixes, unfixed = list_and_correct_entries(bcd, nochange, ovwr_list)
+        if fixes:
+            bcd.write(True)
     return unfixed
 
 
