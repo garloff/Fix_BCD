@@ -232,6 +232,7 @@ def list_and_correct_entries(regd, ovwr_list):
         if desc_key not in elms or 'Element' not in elms[desc_key]:
             continue
         desc = elms[desc_key]["Element"]
+        # TODO: We could actually search partitions for the files referenced here
         if file_key in elms and 'Element' in elms[file_key]:
             desc += " (" + elms[file_key]['Element'].replace("\\\\", "\\") + ")"
         if fil2_key in elms and 'Element' in elms[fil2_key]:

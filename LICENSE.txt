@@ -1,0 +1,9 @@
+fix_boot_bcd.py is under the
+Creative Commons with Attribution and ShareAlike 4.0
+https://creativecommons.org/licenses/by-sa/4.0/
+license.
+
+The registry_dict.py helper can be used unser the terms of
+the Apache Software License 2.0:
+https://www.apache.org/licenses/LICENSE-2.0
+

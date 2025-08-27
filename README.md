@@ -29,7 +29,7 @@ You would typically run this as root on Linux with `/boot/efi/Boot/BCD`
 for the Windows Boot Manager and with `/boot/efi/EFI/Microsoft/Boot/BCD`
 for Windows Boot and `/boot/efi/EFI/Microsoft/Recovery/BCD` for
 Windows Recovery Boot. (The path assumes that your EFI boot partition
-is mounted at `/boot/efi` which is typically the case on Linux machines.)a
+is mounted at `/boot/efi` which is typically the case on Linux machines.)
 
 For image files, you can use `kpartx` to setup device-mapper and loopback
 mappings and the script will then happily process BCD entries referring
@@ -46,6 +46,10 @@ Feel free to reuse it.
 Notes: The `registry_dict.py` helper is under Apache-2.0 license, while
 the fix script `fix_boot_bcd.py` uses the `CC-BY-SA-4.0` license. So do
 not create proprietary tools nor remove credits to me from the latter.
+
+Please note that despite all care and creating a `BCD.bak` backup file,
+this script may damage your BCD file and render your system unbootable.
+You have been warned, please use at your own risk!
 
 This tool was inspired by [Moondarker](https://gist.github.com/Moondarker) with his
 [instructions](https://gist.github.com/Moondarker/2c5b7ed1c6372119ebf03f0b12d11e92)
